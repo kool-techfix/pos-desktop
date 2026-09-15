@@ -1,0 +1,218 @@
+@use '@/styles/tokens' as *;
+
+.auth-page {
+  align-items: center;
+  background: $blue-pale;
+  display: flex;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 1.25rem;
+
+  &__card {
+    background: $paper;
+    display: grid;
+    grid-template-columns: 0.92fr 1.08fr;
+    max-width: 980px;
+    min-height: 620px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  &__intro {
+    background: $ink;
+    color: #f3f6f8;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3rem;
+  }
+
+  &__brand,
+  &__mobile-brand {
+    align-items: center;
+    display: flex;
+    font-weight: 700;
+    gap: 0.75rem;
+  }
+
+  &__message {
+    margin-top: 6rem;
+    max-width: 20rem;
+
+    .eyebrow {
+      color: #b8c7d2;
+    }
+
+    h1 {
+      font-size: clamp(2.75rem, 5vw, 3.5rem);
+      letter-spacing: -0.04em;
+      line-height: 1.02;
+      margin: 1rem 0 0;
+
+      span {
+        color: $gold;
+      }
+    }
+
+    p:last-child {
+      color: #b8c7d2;
+      line-height: 1.75;
+      margin: 1.5rem 0 0;
+    }
+  }
+
+  &__proof {
+    color: #b8c7d2;
+    display: flex;
+    font-size: 0.875rem;
+    gap: 2.5rem;
+
+    strong {
+      color: #f3f6f8;
+      display: block;
+      font-size: 1.5rem;
+      margin-bottom: 0.15rem;
+    }
+  }
+
+  &__form-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem;
+
+    h2 {
+      color: $ink;
+      font-size: 1.875rem;
+      letter-spacing: -0.03em;
+      margin: 0.5rem 0 0;
+    }
+  }
+
+  &__mobile-brand {
+    display: none;
+  }
+
+  &__subtitle {
+    color: $ink-muted;
+    font-size: 0.875rem;
+    margin: 0.5rem 0 0;
+  }
+
+  &__tabs {
+    border-bottom: 1px solid $border;
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  &__tab {
+    @include button-reset;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    color: $ink-muted;
+    font-size: 0.875rem;
+    font-weight: 700;
+    padding: 0 0 0.75rem;
+
+    &--active {
+      border-color: $ink;
+      color: $ink;
+    }
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 1.75rem;
+
+    &--register {
+      gap: 1rem;
+    }
+  }
+
+  &__login-switch {
+    background: #edf1f3;
+    border: 1px solid $border;
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    width: max-content;
+  }
+
+  &__switch {
+    @include button-reset;
+    background: transparent;
+    color: $ink-muted;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.4rem 0.75rem;
+
+    &--active {
+      background: white;
+      color: $ink;
+    }
+  }
+
+  &__field-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  &__hint,
+  &__demo {
+    color: $ink-muted;
+    font-size: 0.75rem;
+    margin: -0.5rem 0 0;
+  }
+
+  &__error {
+    color: $red;
+    font-size: 0.875rem;
+    margin: -0.25rem 0 0;
+  }
+
+  &__submit {
+    border: 0;
+    font-weight: 700;
+    justify-content: center;
+    width: 100%;
+  }
+
+  &__demo span {
+    font-family: var(--app-font-mono);
+  }
+}
+
+@media (max-width: 800px) {
+  .auth-page {
+    padding: 0;
+
+    &__card {
+      display: block;
+      min-height: 100dvh;
+    }
+
+    &__intro {
+      display: none;
+    }
+
+    &__form-area {
+      min-height: 100dvh;
+      padding: 2rem 1.5rem;
+    }
+
+    &__mobile-brand {
+      display: flex;
+      margin-bottom: 3rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-page__field-grid {
+    grid-template-columns: 1fr;
+  }
+}

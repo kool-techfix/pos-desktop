@@ -1,0 +1,25 @@
+@use '../styles/tokens' as *;
+
+.brand-mark {
+  align-items: center;
+  border: 2px solid $ink;
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+
+  &__inner {
+    border: 2px solid $ink;
+    border-radius: 8px 8px 5px 5px;
+    height: 1.25rem;
+    width: 0.75rem;
+  }
+
+  &--light {
+    border-color: $gold;
+
+    .brand-mark__inner {
+      border-color: $gold;
+    }
+  }
+}

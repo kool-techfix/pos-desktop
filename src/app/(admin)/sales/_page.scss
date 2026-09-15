@@ -1,0 +1,157 @@
+@use '../styles/tokens' as *;
+
+.sales-page {
+  &__panel {
+    overflow: hidden;
+  }
+
+  &__toolbar {
+    border-bottom: 1px solid $border;
+    padding: 1rem;
+  }
+
+  &__search {
+    align-items: center;
+    display: flex;
+    max-width: 28rem;
+    position: relative;
+
+    svg {
+      color: $ink-muted;
+      left: 0.75rem;
+      position: absolute;
+    }
+
+    input {
+      background: hsl(var(--background));
+      border: 1px solid $border;
+      height: 2.5rem;
+      padding: 0 0.75rem 0 2.25rem;
+      width: 100%;
+
+      &:focus {
+        @include focus-ring;
+      }
+    }
+  }
+
+  &__table-scroll {
+    overflow-x: auto;
+  }
+
+  &__table {
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    min-width: 760px;
+    width: 100%;
+
+    th,
+    td {
+      border-bottom: 1px solid rgba($border, 0.7);
+      padding: 1rem 1.25rem;
+      text-align: left;
+    }
+
+    th {
+      color: $ink-muted;
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td:nth-last-child(2),
+    th:nth-last-child(2) {
+      text-align: right;
+    }
+
+    small {
+      color: $ink-muted;
+      display: block;
+      font-size: 0.6875rem;
+      margin-top: 0.25rem;
+    }
+
+    .muted {
+      color: $ink-muted;
+    }
+  }
+
+  &__view {
+    text-align: right !important;
+
+    button {
+      @include button-reset;
+      background: transparent;
+      color: $ink;
+      font-size: 0.75rem;
+      font-weight: 700;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &__empty {
+    padding: 3rem 1rem;
+  }
+
+  &__detail-meta,
+  &__detail-total > div {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__detail-meta {
+    border-bottom: 1px solid $border;
+    color: $ink-muted;
+    font-size: 0.875rem;
+    padding-bottom: 1rem;
+  }
+
+  &__detail-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 0;
+
+    > div {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    small {
+      color: $ink-muted;
+      display: block;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+  }
+
+  &__detail-total {
+    border-top: 1px solid $border;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 1rem;
+
+    > div:first-child {
+      font-weight: 700;
+    }
+
+    > div:not(:first-child) {
+      color: $ink-muted;
+    }
+  }
+
+  &__print {
+    border: 0;
+    margin-top: 1.5rem;
+    width: 100%;
+  }
+}

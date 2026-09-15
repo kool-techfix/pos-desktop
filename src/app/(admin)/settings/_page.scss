@@ -1,0 +1,75 @@
+@use '../styles/tokens' as *;
+
+.settings-page {
+  &__panel {
+    max-width: 42rem;
+    padding: 2rem;
+  }
+
+  &__intro {
+    align-items: flex-start;
+    border-bottom: 1px solid $border;
+    display: flex;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+
+    > div {
+      align-items: center;
+      background: $blue-soft;
+      color: $ink;
+      display: flex;
+      height: 2.75rem;
+      justify-content: center;
+      width: 2.75rem;
+    }
+
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h2 {
+      font-size: 1rem;
+    }
+
+    p {
+      color: $ink-muted;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+  }
+
+  &__field {
+    margin-top: 1.75rem;
+    max-width: 25rem;
+
+    p {
+      color: $ink-muted;
+      font-size: 0.75rem;
+      margin: 0.5rem 0 0;
+    }
+  }
+
+  &__actions {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+
+    button {
+      border: 0;
+      font-weight: 700;
+    }
+
+    span {
+      color: $green;
+      font-size: 0.875rem;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .settings-page__panel {
+    padding: 1.25rem;
+  }
+}

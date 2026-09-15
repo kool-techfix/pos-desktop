@@ -1,0 +1,51 @@
+@use '../styles/tokens' as *;
+
+.modal {
+  align-items: center;
+  background: rgba(20, 37, 54, 0.35);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 50;
+
+  &__dialog {
+    background: white;
+    border: 1px solid $border;
+    box-shadow: 0 20px 50px rgba(20, 37, 54, 0.2);
+    max-height: calc(100vh - 2rem);
+    max-width: 32rem;
+    overflow: auto;
+    width: 100%;
+  }
+
+  &__header {
+    align-items: center;
+    border-bottom: 1px solid $border;
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+
+    h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+  }
+
+  &__close {
+    @include button-reset;
+    background: transparent;
+    color: $ink-muted;
+    padding: 0.25rem;
+
+    &:hover {
+      color: $ink;
+    }
+  }
+
+  &__body {
+    padding: 1.5rem;
+  }
+}

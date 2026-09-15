@@ -1,0 +1,26 @@
+$ink: #24384d;
+$ink-dark: #142536;
+$ink-muted: #6b7a87;
+$blue-soft: #e3ebf0;
+$blue-pale: #dfe8ef;
+$paper: #f8fafb;
+$border: #d6dfe5;
+$gold: #edc47b;
+$gold-action: #c99b52;
+$green: #4f816c;
+$green-soft: #e4f0e9;
+$red: #a1433b;
+$red-soft: #f8e4e1;
+
+$shadow-panel: 0 12px 30px rgba(20, 37, 54, 0.06);
+
+@mixin focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 113, 133, 0.18);
+}
+
+@mixin button-reset {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}

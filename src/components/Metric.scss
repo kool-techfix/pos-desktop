@@ -1,0 +1,32 @@
+@use '../styles/tokens' as *;
+
+.metric {
+  padding: 1rem 1.25rem;
+
+  &__top {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__icon {
+    &--blue { color: $ink; }
+    &--gold { color: #b3832f; }
+    &--red { color: #b34b43; }
+    &--green { color: $green; }
+  }
+
+  &__value {
+    color: $ink;
+    font-size: clamp(1.5rem, 3vw, 1.875rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin: 0.75rem 0 0;
+  }
+
+  &__note {
+    color: $ink-muted;
+    font-size: 0.75rem;
+    margin: 0.25rem 0 0;
+  }
+}

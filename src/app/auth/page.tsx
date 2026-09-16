@@ -6,9 +6,9 @@ import { ArrowUpRight } from "lucide-react";
 
 import { BrandMark } from "@/components/BrandMark";
 import { Field } from "@/components/Field";
-import { uid } from "@/lib/helpers";
+import { loginAsAdmin, loginAsSalesPerson, registerAdmin } from "@/lib/auth";
+import { createBusiness } from "@/lib/business";
 import { loadState, saveState, setSessionId } from "@/lib/storage";
-import type { Business, User } from "@/types/types";
 
 import "./page.scss";
 
@@ -53,84 +53,76 @@ export default function AuthPage() {
   const submitLogin = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const state = loadState();
+    try {
+      const state = loadState();
 
-    const found =
-      loginType === "admin"
-        ? state.users.find(
-            (user) =>
-              user.role === "ADMIN" &&
-              user.active &&
-              user.username?.toLowerCase() ===
-                form.username.trim().toLowerCase() &&
-              user.password === form.password,
-          )
-        : state.users.find(
-            (user) =>
-              user.role === "SALES_PERSON" &&
-              user.active &&
-              user.signInCode?.toUpperCase() === form.code.trim().toUpperCase(),
-          );
+      const result =
+        loginType === "admin"
+          ? loginAsAdmin(state.users, {
+              username: form.username,
+              password: form.password,
+            })
+          : loginAsSalesPerson(state.users, {
+              signInCode: form.code,
+            });
 
-    if (!found) {
-      setError("Those details did not match an active account.");
-      return;
+      router.replace(
+        result.user.role === "SALES_PERSON" ? "/pos" : "/dashboard",
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Those details did not match an active account.",
+      );
     }
-
-    setSessionId(found.id);
-
-    if (found.role === "SALES_PERSON") {
-      router.replace("/pos");
-      return;
-    }
-
-    router.replace("/dashboard");
   };
 
   const submitRegister = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  event.preventDefault();
 
-    if (
-      !form.business.trim() ||
-      !form.name.trim() ||
-      !form.username.trim() ||
-      form.password.length < 4
-    ) {
-      setError("Complete every field. Passwords need at least 4 characters.");
-      return;
-    }
+  if (form.password !== form.confirm) {
+    setError("Password confirmation does not match.");
+    return;
+  }
 
-    if (form.password !== form.confirm) {
-      setError("Password confirmation does not match.");
-      return;
-    }
-
+  try {
     const state = loadState();
 
-    const business: Business = {
-      name: form.business.trim(),
-    };
+    const business = createBusiness(form.business);
 
-    const admin: User = {
-      id: uid("admin"),
-      name: form.name.trim(),
-      username: form.username.trim(),
+    const users = registerAdmin(state.users, {
+      name: form.name,
+      username: form.username,
       password: form.password,
-      role: "ADMIN",
-      active: true,
-    };
+    });
+
+    const admin = users.find(
+      (user) => user.role === "ADMIN",
+    );
+
+    if (!admin) {
+      throw new Error("Unable to create admin account");
+    }
 
     const nextState = {
       ...state,
       business,
-      users: [...state.users.filter((user) => user.role !== "ADMIN"), admin],
+      users,
     };
 
     saveState(nextState);
     setSessionId(admin.id);
 
     router.replace("/dashboard");
-  };
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Unable to create business account.",
+    );
+  }
+};
 
   const setModeAndClearError = (nextMode: "login" | "register") => {
     setMode(nextMode);

@@ -1,9 +1,9 @@
 export function money(value: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+  return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(value);
 }
 
 export function dateTime(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('en-NG', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -12,7 +12,7 @@ export function dateTime(value: string) {
 }
 
 export function dateOnly(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('en-NG', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

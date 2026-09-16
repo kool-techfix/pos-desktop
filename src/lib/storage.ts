@@ -1,198 +1,110 @@
-import type { AppState, Product } from "@/types/types";
+import type { AppState } from "@/types/types";
+import {
+  createSeedSales,
+  seedBusiness,
+  seedProducts,
+  seedUsers,
+} from "../data/seed";
 
 export const STORAGE_KEY = "pos-state-v1";
 export const SESSION_KEY = "pos-session";
 
-const seedProducts: Product[] = [
-  {
-    id: "p1",
-    name: "Coca-Cola",
-    size: "330 ml can",
-    category: "Cola",
-    price: 1.5,
-    stock: 42,
-    lowStockThreshold: 12,
-  },
-  {
-    id: "p2",
-    name: "Pepsi",
-    size: "330 ml can",
-    category: "Cola",
-    price: 1.45,
-    stock: 28,
-    lowStockThreshold: 12,
-  },
-  {
-    id: "p3",
-    name: "Fanta Orange",
-    size: "500 ml bottle",
-    category: "Orange",
-    price: 1.8,
-    stock: 9,
-    lowStockThreshold: 10,
-  },
-  {
-    id: "p4",
-    name: "Sprite",
-    size: "500 ml bottle",
-    category: "Lemon-lime",
-    price: 1.8,
-    stock: 31,
-    lowStockThreshold: 10,
-  },
-  {
-    id: "p5",
-    name: "Red Bull",
-    size: "250 ml can",
-    category: "Energy",
-    price: 3.25,
-    stock: 17,
-    lowStockThreshold: 8,
-  },
-  {
-    id: "p6",
-    name: "Still Water",
-    size: "500 ml bottle",
-    category: "Water",
-    price: 1.1,
-    stock: 63,
-    lowStockThreshold: 18,
-  },
-  {
-    id: "p7",
-    name: "Ginger Beer",
-    size: "330 ml bottle",
-    category: "Specialty",
-    price: 2.4,
-    stock: 6,
-    lowStockThreshold: 8,
-  },
-  {
-    id: "p8",
-    name: "Iced Tea Peach",
-    size: "500 ml bottle",
-    category: "Tea",
-    price: 2.1,
-    stock: 22,
-    lowStockThreshold: 8,
-  },
-];
-
 export function createInitialState(): AppState {
-  const now = new Date();
-  const yesterday = new Date(now.getTime() - 86400000);
-
   return {
-    business: { name: "Bluebird Drinks" },
-    users: [
-      {
-        id: "admin-1",
-        name: "Mara Ellis",
-        username: "owner@bluebird.test",
-        password: "bluebird",
-        role: "ADMIN",
-        active: true,
-      },
-      {
-        id: "sp-1",
-        name: "Jon Bell",
-        role: "SALES_PERSON",
-        signInCode: "4826",
-        active: true,
-      },
-    ],
-    products: seedProducts,
-    sales: [
-      {
-        id: "s1",
-        receiptNumber: "BB-1048",
-        createdAt: new Date(now.setHours(10, 18, 0, 0)).toISOString(),
-        items: [
-          {
-            productId: "p1",
-            name: "Coca-Cola",
-            size: "330 ml can",
-            quantity: 2,
-            unitPrice: 1.5,
-          },
-          {
-            productId: "p6",
-            name: "Still Water",
-            size: "500 ml bottle",
-            quantity: 1,
-            unitPrice: 1.1,
-          },
-        ],
-        total: 4.1,
-        amountPaid: 5,
-        change: 0.9,
-        cashierId: "admin-1",
-        cashierName: "Mara Ellis",
-      },
-      {
-        id: "s2",
-        receiptNumber: "BB-1047",
-        createdAt: yesterday.toISOString(),
-        items: [
-          {
-            productId: "p5",
-            name: "Red Bull",
-            size: "250 ml can",
-            quantity: 1,
-            unitPrice: 3.25,
-          },
-        ],
-        total: 3.25,
-        amountPaid: 5,
-        change: 1.75,
-        cashierId: "sp-1",
-        cashierName: "Jon Bell",
-      },
-      {
-        id: "s3",
-        receiptNumber: "BB-1046",
-        createdAt: yesterday.toISOString(),
-        items: [
-          {
-            productId: "p3",
-            name: "Fanta Orange",
-            size: "500 ml bottle",
-            quantity: 2,
-            unitPrice: 1.8,
-          },
-        ],
-        total: 3.6,
-        amountPaid: 5,
-        change: 1.4,
-        cashierId: "admin-1",
-        cashierName: "Mara Ellis",
-      },
-    ],
+    business: { ...seedBusiness },
+    users: [...seedUsers],
+    products: [...seedProducts],
+    sales: createSeedSales(),
   };
 }
 
 export function loadState(): AppState {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored) as AppState;
-  } catch {
-    // Seed state is the safe fallback when local storage is unavailable.
+  if (typeof window === "undefined") {
+    return createInitialState();
   }
-  return createInitialState();
+
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+
+    if (!stored) {
+      return createInitialState();
+    }
+
+    const parsed: unknown = JSON.parse(stored);
+
+    if (!isValidAppState(parsed)) {
+      return createInitialState();
+    }
+
+    return parsed;
+  } catch {
+    return createInitialState();
+  }
 }
 
-export function saveState(state: AppState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+export function saveState(state: AppState): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(state),
+    );
+  } catch {
+    // Ignore storage failures.
+  }
 }
 
-export function getSessionId() {
-  return localStorage.getItem(SESSION_KEY);
+export function getSessionId(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage.getItem(SESSION_KEY);
+  } catch {
+    return null;
+  }
 }
 
-export function setSessionId(id: string) {
-  localStorage.setItem(SESSION_KEY, id);
+export function setSessionId(id: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(SESSION_KEY, id);
+  } catch {
+    // Ignore storage failures.
+  }
 }
 
-export function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
+export function clearSession(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(SESSION_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function isValidAppState(value: unknown): value is AppState {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const state = value as Record<string, unknown>;
+
+  return (
+    !!state.business &&
+    typeof state.business === "object" &&
+    Array.isArray(state.users) &&
+    Array.isArray(state.products) &&
+    Array.isArray(state.sales)
+  );
 }

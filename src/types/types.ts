@@ -50,3 +50,18 @@ export type AppState = {
 };
 
 export type CartItem = SaleItem;
+
+
+type StockMovement = {
+  id: string;
+  productId: string;
+  type:
+    | "PURCHASE"
+    | "SALE"
+    | "CUSTOMER_RETURN"
+    | "SUPPLIER_RETURN"
+    | "ADJUSTMENT";
+  quantity: number;
+  createdAt: string;
+  referenceId?: string;
+};

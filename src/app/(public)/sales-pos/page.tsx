@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { ReceiptPrint } from "@/components/ReceiptPrint";
-import { money, uid } from "@/lib/helpers";
+import { money } from "@/lib/helpers";
+import { searchProducts } from "@/lib/products";
+import { calculateSaleTotal, createSale } from "@/lib/sales";
 import type { AppState, CartItem, Product, Sale, User } from "@/types/types";
 import "./_page.scss";
 
@@ -40,17 +42,10 @@ export default function Page({
     "All",
     ...Array.from(new Set(products.map((product) => product.category))),
   ];
-  const filtered = products.filter(
-    (product) =>
-      (category === "All" || product.category === category) &&
-      `${product.name} ${product.size}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
+  const filtered = searchProducts(products, query).filter(
+    (product) => category === "All" || product.category === category,
   );
-  const total = cart.reduce(
-    (sum, item) => sum + item.unitPrice * item.quantity,
-    0,
-  );
+  const total = calculateSaleTotal(cart);
   const paid = Number(amountPaid) || 0;
   const change = paid - total;
 
@@ -90,31 +85,33 @@ export default function Page({
   };
 
   const finishSale = () => {
-    if (!cart.length || paid < total) return;
-    const sale: Sale = {
-      id: uid("sale"),
-      receiptNumber: `BB-${1049 + state.sales.length}`,
-      createdAt: new Date().toISOString(),
-      items: cart,
-      total,
-      amountPaid: paid,
-      change,
-      cashierId: user.id,
-      cashierName: user.name,
-    };
-    mutate((current) => ({
-      ...current,
-      sales: [sale, ...current.sales],
-      products: current.products.map((product) => {
-        const sold = cart.find((item) => item.productId === product.id);
-        return sold
-          ? { ...product, stock: product.stock - sold.quantity }
-          : product;
-      }),
-    }));
-    setLastSale(sale);
-    setCart([]);
-    setAmountPaid("");
+    if (!cart.length || paid < total) {
+      return;
+    }
+
+    try {
+      const result = createSale(state.sales, state.products, {
+        items: cart.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+        amountPaid: paid,
+        cashierId: user.id,
+        cashierName: user.name,
+      });
+
+      mutate((current) => ({
+        ...current,
+        products: result.products,
+        sales: [result.sale, ...current.sales],
+      }));
+
+      setLastSale(result.sale);
+      setCart([]);
+      setAmountPaid("");
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (

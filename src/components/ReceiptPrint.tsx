@@ -1,33 +1,65 @@
 import { dateTime, money } from '@/lib/helpers';
-import type { Business, Sale } from '@/types';
+import type { Business, Sale } from '@/types/types';
+
 import './ReceiptPrint.scss';
 
-export function ReceiptPrint({ sale, business }: { sale: Sale; business: Business }) {
+type ReceiptPrintProps = {
+  sale: Sale;
+  business: Business;
+};
+
+export function ReceiptPrint({
+  sale,
+  business,
+}: ReceiptPrintProps) {
   return (
     <div className="print-receipt">
       <div className="receipt-paper">
         <strong>{business.name}</strong>
+
         <br />
+
         Receipt {sale.receiptNumber}
+
         <br />
+
         {dateTime(sale.createdAt)}
+
         <hr />
+
         {sale.items.map((item) => (
           <div key={item.productId}>
-            {item.quantity} x {item.name} {money(item.unitPrice * item.quantity)}
-            <br />
-            <span>{item.size}</span>
+            <div>
+              {item.quantity} × {item.name}
+            </div>
+
+            <div>
+              {money(item.unitPrice * item.quantity)}
+            </div>
+
+            {item.size && <span>{item.size}</span>}
           </div>
         ))}
+
         <hr />
-        TOTAL {money(sale.total)}
+
+        <div>
+          TOTAL {money(sale.total)}
+        </div>
+
+        <div>
+          PAID {money(sale.amountPaid)}
+        </div>
+
+        <div>
+          CHANGE {money(sale.change)}
+        </div>
+
         <br />
-        PAID {money(sale.amountPaid)}
-        <br />
-        CHANGE {money(sale.change)}
-        <br />
-        <br />
-        Cashier: {sale.cashierName}
+
+        <div>
+          Cashier: {sale.cashierName}
+        </div>
       </div>
     </div>
   );

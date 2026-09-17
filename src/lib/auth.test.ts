@@ -1,4 +1,5 @@
 import {
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -13,13 +14,14 @@ import {
   loginAsSalesPerson,
   logout,
 } from "./auth";
+import { hashPassword } from "./password";
 
 const users: User[] = [
   {
     id: "admin-1",
     name: "Mara Ellis",
     username: "owner@bluebird.test",
-    password: "bluebird",
+    password: "",
     role: "ADMIN",
     active: true,
   },
@@ -27,7 +29,7 @@ const users: User[] = [
     id: "admin-2",
     name: "Inactive Admin",
     username: "inactive@bluebird.test",
-    password: "password",
+    password: "",
     role: "ADMIN",
     active: false,
   },
@@ -46,6 +48,11 @@ const users: User[] = [
     active: false,
   },
 ];
+
+beforeAll(async () => {
+  users[0].password = await hashPassword("bluebird");
+  users[1].password = await hashPassword("password");
+});
 
 const localStorageMock = {
   store: new Map<string, string>(),
@@ -72,12 +79,12 @@ vi.stubGlobal("window", {
 });
 
 describe("auth", () => {
-  beforeEach(() => {
-    logout();
+  beforeEach(async () => {
+    await logout();
   });
 
-  it("logs in an admin with valid credentials", () => {
-    const result = loginAsAdmin(users, {
+  it("logs in an admin with valid credentials", async () => {
+    const result = await loginAsAdmin(users, {
       username: "owner@bluebird.test",
       password: "bluebird",
     });
@@ -86,8 +93,8 @@ describe("auth", () => {
     expect(result.user.role).toBe("ADMIN");
   });
 
-  it("allows admin username matching regardless of case", () => {
-    const result = loginAsAdmin(users, {
+  it("allows admin username matching regardless of case", async () => {
+    const result = await loginAsAdmin(users, {
       username: "OWNER@BLUEBIRD.TEST",
       password: "bluebird",
     });
@@ -95,35 +102,35 @@ describe("auth", () => {
     expect(result.user.id).toBe("admin-1");
   });
 
-  it("rejects an invalid admin password", () => {
-    expect(() =>
+  it("rejects an invalid admin password", async () => {
+    await expect(
       loginAsAdmin(users, {
         username: "owner@bluebird.test",
         password: "wrong-password",
       }),
-    ).toThrow("Invalid username or password");
+    ).rejects.toThrow("Invalid username or password");
   });
 
-  it("rejects an unknown admin username", () => {
-    expect(() =>
+  it("rejects an unknown admin username", async () => {
+    await expect(
       loginAsAdmin(users, {
         username: "unknown@bluebird.test",
         password: "bluebird",
       }),
-    ).toThrow("Invalid username or password");
+    ).rejects.toThrow("Invalid username or password");
   });
 
-  it("rejects an inactive admin", () => {
-    expect(() =>
+  it("rejects an inactive admin", async () => {
+    await expect(
       loginAsAdmin(users, {
         username: "inactive@bluebird.test",
         password: "password",
       }),
-    ).toThrow("This account is inactive");
+    ).rejects.toThrow("This account is inactive");
   });
 
-  it("logs in a sales person with a valid sign-in code", () => {
-    const result = loginAsSalesPerson(users, {
+  it("logs in a sales person with a valid sign-in code", async () => {
+    const result = await loginAsSalesPerson(users, {
       signInCode: "JB4826",
     });
 
@@ -131,67 +138,67 @@ describe("auth", () => {
     expect(result.user.role).toBe("SALES_PERSON");
   });
 
-  it("allows sales-person sign-in code matching regardless of case", () => {
-    const result = loginAsSalesPerson(users, {
+  it("allows sales-person sign-in code matching regardless of case", async () => {
+    const result = await loginAsSalesPerson(users, {
       signInCode: "jb4826",
     });
 
     expect(result.user.id).toBe("sp-1");
   });
 
-  it("rejects an invalid sales-person sign-in code", () => {
-    expect(() =>
+  it("rejects an invalid sales-person sign-in code", async () => {
+    await expect(
       loginAsSalesPerson(users, {
         signInCode: "WRONG1",
       }),
-    ).toThrow("Invalid sign-in code");
+    ).rejects.toThrow("Invalid sign-in code");
   });
 
-  it("rejects an inactive sales person", () => {
-    expect(() =>
+  it("rejects an inactive sales person", async () => {
+    await expect(
       loginAsSalesPerson(users, {
         signInCode: "IS1234",
       }),
-    ).toThrow("This account is inactive");
+    ).rejects.toThrow("This account is inactive");
   });
 
-  it("returns the currently authenticated user", () => {
-    loginAsAdmin(users, {
+  it("returns the currently authenticated user", async () => {
+    await loginAsAdmin(users, {
       username: "owner@bluebird.test",
       password: "bluebird",
     });
 
-    const user = getCurrentUser(users);
+    const user = await getCurrentUser(users);
 
     expect(user?.id).toBe("admin-1");
   });
 
-  it("reports an authenticated session", () => {
-    loginAsSalesPerson(users, {
+  it("reports an authenticated session", async () => {
+    await loginAsSalesPerson(users, {
       signInCode: "JB4826",
     });
 
-    expect(isAuthenticated(users)).toBe(true);
+    expect(await isAuthenticated(users)).toBe(true);
   });
 
-  it("reports no authenticated session before login", () => {
-    expect(isAuthenticated(users)).toBe(false);
+  it("reports no authenticated session before login", async () => {
+    expect(await isAuthenticated(users)).toBe(false);
   });
 
-  it("logs out the current user", () => {
-    loginAsAdmin(users, {
+  it("logs out the current user", async () => {
+    await loginAsAdmin(users, {
       username: "owner@bluebird.test",
       password: "bluebird",
     });
 
-    logout();
+    await logout();
 
-    expect(getCurrentUser(users)).toBeUndefined();
-    expect(isAuthenticated(users)).toBe(false);
+    expect(await getCurrentUser(users)).toBeUndefined();
+    expect(await isAuthenticated(users)).toBe(false);
   });
 
-  it("clears the session when the session user no longer exists", () => {
-    loginAsAdmin(users, {
+  it("clears the session when the session user no longer exists", async () => {
+    await loginAsAdmin(users, {
       username: "owner@bluebird.test",
       password: "bluebird",
     });
@@ -200,24 +207,24 @@ describe("auth", () => {
       (user) => user.id !== "admin-1",
     );
 
-    expect(getCurrentUser(usersWithoutAdmin)).toBeUndefined();
-    expect(isAuthenticated(usersWithoutAdmin)).toBe(false);
+    expect(await getCurrentUser(usersWithoutAdmin)).toBeUndefined();
+    expect(await isAuthenticated(usersWithoutAdmin)).toBe(false);
   });
 
-  it("requires admin username and password", () => {
-    expect(() =>
+  it("requires admin username and password", async () => {
+    await expect(
       loginAsAdmin(users, {
         username: "",
         password: "",
       }),
-    ).toThrow("Username and password are required");
+    ).rejects.toThrow("Username and password are required");
   });
 
-  it("requires a sales-person sign-in code", () => {
-    expect(() =>
+  it("requires a sales-person sign-in code", async () => {
+    await expect(
       loginAsSalesPerson(users, {
         signInCode: "",
       }),
-    ).toThrow("Sign-in code is required");
+    ).rejects.toThrow("Sign-in code is required");
   });
 });

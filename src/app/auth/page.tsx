@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, type ChangeEvent, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 
 import { BrandMark } from "@/components/BrandMark";
 import { Field } from "@/components/Field";
-import { loginAsAdmin, loginAsSalesPerson, registerAdmin } from "@/lib/auth";
-import { createBusiness } from "@/lib/business";
-import { loadState, saveState, setSessionId } from "@/lib/storage";
+import { useApp } from "@/providers/AppProvider";
 
 import "./page.scss";
 
@@ -21,8 +19,30 @@ type AuthForm = {
   code: string;
 };
 
+function sanitizeRedirect(value: string | null): string | null {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return null;
+  }
+
+  return value;
+}
+
 export default function AuthPage() {
+  return (
+    <Suspense fallback={null}>
+      <AuthPageContent />
+    </Suspense>
+  );
+}
+
+function AuthPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const {
+  registerBusiness,
+  loginAsAdmin: authenticateAdmin,
+  loginAsSalesPerson: authenticateSalesPerson,
+} = useApp();
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [loginType, setLoginType] = useState<"admin" | "sales">("admin");
@@ -50,35 +70,38 @@ export default function AuthPage() {
       }
     };
 
-  const submitLogin = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const submitLogin = async (event: FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
 
-    try {
-      const state = loadState();
+  try {
+    const user =
+      loginType === "admin"
+        ? await authenticateAdmin({
+            username: form.username,
+            password: form.password,
+          })
+        : await authenticateSalesPerson({
+            signInCode: form.code,
+          });
 
-      const result =
-        loginType === "admin"
-          ? loginAsAdmin(state.users, {
-              username: form.username,
-              password: form.password,
-            })
-          : loginAsSalesPerson(state.users, {
-              signInCode: form.code,
-            });
+    const defaultTarget =
+      user.role === "SALES_PERSON" ? "/sales-pos" : "/dashboard";
 
-      router.replace(
-        result.user.role === "SALES_PERSON" ? "/pos" : "/dashboard",
-      );
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Those details did not match an active account.",
-      );
-    }
-  };
+    router.replace(
+      sanitizeRedirect(searchParams.get("redirect")) ?? defaultTarget,
+    );
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Those details did not match an active account.",
+    );
+  }
+};
 
-  const submitRegister = (event: FormEvent<HTMLFormElement>) => {
+  const submitRegister = async (
+  event: FormEvent<HTMLFormElement>,
+) => {
   event.preventDefault();
 
   if (form.password !== form.confirm) {
@@ -87,32 +110,12 @@ export default function AuthPage() {
   }
 
   try {
-    const state = loadState();
-
-    const business = createBusiness(form.business);
-
-    const users = registerAdmin(state.users, {
+    await registerBusiness({
+      businessName: form.business,
       name: form.name,
       username: form.username,
       password: form.password,
     });
-
-    const admin = users.find(
-      (user) => user.role === "ADMIN",
-    );
-
-    if (!admin) {
-      throw new Error("Unable to create admin account");
-    }
-
-    const nextState = {
-      ...state,
-      business,
-      users,
-    };
-
-    saveState(nextState);
-    setSessionId(admin.id);
 
     router.replace("/dashboard");
   } catch (error) {

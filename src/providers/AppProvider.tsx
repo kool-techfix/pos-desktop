@@ -9,13 +9,15 @@ import {
   useState,
 } from "react";
 
-import type { AppState, Business, Product, Sale, User } from "@/types/types";
+import type { AppState, Business, Sale, User } from "@/types/types";
 
 import {
   clearSession,
+  createInitialState,
   getSessionId,
   loadState,
   saveState,
+  setSessionId,
 } from "@/lib/storage";
 
 import {
@@ -51,20 +53,27 @@ import {
   type SalesPersonLoginInput,
 } from "@/lib/auth";
 
-import { updateBusiness as updateBusinessService } from "@/lib/business";
+import {
+  createBusiness,
+  updateBusiness as updateBusinessService,
+} from "@/lib/business";
 
 type AppContextValue = {
   state: AppState;
   user: User | null;
   business: Business;
+  isInitialized: boolean;
 
-  registerAdmin: (input: AdminRegistrationInput) => User;
-
-  loginAsAdmin: (input: AdminLoginInput) => User;
-
-  loginAsSalesPerson: (input: SalesPersonLoginInput) => User;
-
-  signOut: () => void;
+  registerAdmin: (input: AdminRegistrationInput) => Promise<User>;
+  registerBusiness: (input: {
+    businessName: string;
+    name: string;
+    username: string;
+    password: string;
+  }) => Promise<User>;
+  loginAsAdmin: (input: AdminLoginInput) => Promise<User>;
+  loginAsSalesPerson: (input: SalesPersonLoginInput) => Promise<User>;
+  signOut: () => Promise<void>;
 
   addProduct: (input: ProductInput) => void;
 
@@ -93,11 +102,39 @@ type AppContextValue = {
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>(() => loadState());
+  const [state, setState] = useState<AppState>(() => createInitialState());
+  const [sessionId, setCurrentSession] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const [sessionId, setCurrentSession] = useState<string | null>(() =>
-    getSessionId(),
-  );
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initialize() {
+      try {
+        const [storedState, storedSessionId] = await Promise.all([
+          loadState(),
+          getSessionId(),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        setState(storedState);
+        setCurrentSession(storedSessionId);
+      } finally {
+        if (!cancelled) {
+          setIsInitialized(true);
+        }
+      }
+    }
+
+    void initialize();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   /*
    * Resolve the currently authenticated user from the
@@ -120,58 +157,109 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
    * Persist application state whenever it changes.
    */
   useEffect(() => {
-    saveState(state);
-  }, [state]);
+    if (!isInitialized) {
+      return;
+    }
+
+    void saveState(state);
+  }, [state, isInitialized]);
 
   /*
    * If the currently stored session belongs to a user that
    * has been removed or deactivated, clear the session.
    */
   useEffect(() => {
-    if (sessionId && !user) {
-      clearSession();
-      setCurrentSession(null);
+    if (!sessionId || user) {
+      return;
     }
+
+    let cancelled = false;
+
+    void clearSession().finally(() => {
+      if (!cancelled) {
+        setCurrentSession(null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [sessionId, user]);
 
   /*
    * ADMIN REGISTRATION
    */
   const handleRegisterAdmin = useCallback(
-    (input: AdminRegistrationInput): User => {
-      let registeredUser: User | undefined;
+    async (input: AdminRegistrationInput): Promise<User> => {
+      const nextUsers = await registerAdmin(state.users, input);
 
-      setState((current) => {
-        const nextUsers = registerAdmin(current.users, input);
-
-        registeredUser = nextUsers.find(
-          (candidate) =>
-            candidate.role === "ADMIN" &&
-            candidate.username?.trim().toLowerCase() ===
-              input.username.trim().toLowerCase(),
-        );
-
-        return {
-          ...current,
-          users: nextUsers,
-        };
-      });
+      const registeredUser = nextUsers.find(
+        (candidate) =>
+          candidate.role === "ADMIN" &&
+          candidate.username?.trim().toLowerCase() ===
+            input.username.trim().toLowerCase(),
+      );
 
       if (!registeredUser) {
         throw new Error("Unable to create admin account");
       }
 
+      setState((current) => ({
+        ...current,
+        users: nextUsers,
+      }));
+
       return registeredUser;
     },
-    [],
+    [state.users],
+  );
+
+  const handleRegisterBusiness = useCallback(
+    async (input: {
+      businessName: string;
+      name: string;
+      username: string;
+      password: string;
+    }): Promise<User> => {
+      const business = createBusiness(input.businessName);
+
+      const nextUsers = await registerAdmin(state.users, {
+        name: input.name,
+        username: input.username,
+        password: input.password,
+      });
+
+      const createdAdmin = nextUsers.find(
+        (candidate) =>
+          candidate.role === "ADMIN" &&
+          candidate.username?.trim().toLowerCase() ===
+            input.username.trim().toLowerCase(),
+      );
+
+      if (!createdAdmin) {
+        throw new Error("Unable to create admin account");
+      }
+
+      setState((current) => ({
+        ...current,
+        business,
+        users: nextUsers,
+      }));
+
+      await setSessionId(createdAdmin.id);
+      setCurrentSession(createdAdmin.id);
+
+      return createdAdmin;
+    },
+    [state.users],
   );
 
   /*
    * ADMIN LOGIN
    */
   const handleLoginAsAdmin = useCallback(
-    (input: AdminLoginInput): User => {
-      const result = loginAsAdmin(state.users, input);
+    async (input: AdminLoginInput): Promise<User> => {
+      const result = await loginAsAdmin(state.users, input);
 
       setCurrentSession(result.user.id);
 
@@ -184,8 +272,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
    * SALES PERSON LOGIN
    */
   const handleLoginAsSalesPerson = useCallback(
-    (input: SalesPersonLoginInput): User => {
-      const result = loginAsSalesPerson(state.users, input);
+    async (input: SalesPersonLoginInput): Promise<User> => {
+      const result = await loginAsSalesPerson(state.users, input);
 
       setCurrentSession(result.user.id);
 
@@ -197,8 +285,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   /*
    * LOGOUT
    */
-  const handleSignOut = useCallback(() => {
-    logout();
+  const handleSignOut = useCallback(async (): Promise<void> => {
+    await logout();
     setCurrentSession(null);
   }, []);
 
@@ -337,8 +425,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       state,
       user,
       business,
+      isInitialized,
 
       registerAdmin: handleRegisterAdmin,
+      registerBusiness: handleRegisterBusiness,
 
       loginAsAdmin: handleLoginAsAdmin,
       loginAsSalesPerson: handleLoginAsSalesPerson,
@@ -362,8 +452,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       state,
       user,
       business,
+      isInitialized,
 
       handleRegisterAdmin,
+      handleRegisterBusiness,
 
       handleLoginAsAdmin,
       handleLoginAsSalesPerson,

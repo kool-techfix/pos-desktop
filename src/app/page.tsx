@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect } from "react";
+
 import { useRouter } from "next/navigation";
 
-import { getSessionId, loadState } from "@/lib/storage";
+import { useApp } from "@/providers/AppProvider";
 
 export default function HomePage() {
   const router = useRouter();
 
-  useEffect(() => {
-    const state = loadState();
-    const sessionId = getSessionId();
+  const { user, isInitialized } = useApp();
 
-    const user = state.users.find(
-      (entry) => entry.id === sessionId && entry.active,
-    );
+  useEffect(() => {
+    if (!isInitialized) {
+      return;
+    }
 
     if (!user) {
       router.replace("/auth");
@@ -27,7 +27,7 @@ export default function HomePage() {
     }
 
     router.replace("/dashboard");
-  }, [router]);
+  }, [isInitialized, user, router]);
 
   return null;
 }

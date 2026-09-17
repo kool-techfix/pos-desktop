@@ -1,22 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
 import { FileText, Printer, Search } from "lucide-react";
 
 import { EmptyState } from "@/components/EmptyState";
 import { Modal } from "@/components/Modal";
 import { PageTitle } from "@/components/PageTitle";
 import { ReceiptPrint } from "@/components/ReceiptPrint";
+
 import { dateOnly, dateTime, money } from "@/lib/helpers";
-import type { AppState, Sale } from "@/types/types";
+import type { Business, Sale } from "@/types/types";
 
 import "./_page.scss";
+import { useApp } from "@/providers/AppProvider";
 
-type SalesPageProps = {
-  state: AppState;
-};
+export default function SalesPage() {
+  const { state } = useApp();
 
-export function SalesPage({ state }: SalesPageProps) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Sale | null>(null);
 
@@ -152,11 +153,15 @@ function SaleRow({ sale, onView }: SaleRowProps) {
 
 type SaleReceiptModalProps = {
   sale: Sale;
-  business: AppState["business"];
+  business: Business;
   onClose: () => void;
 };
 
-function SaleReceiptModal({ sale, business, onClose }: SaleReceiptModalProps) {
+function SaleReceiptModal({
+  sale,
+  business,
+  onClose,
+}: SaleReceiptModalProps) {
   return (
     <Modal title={sale.receiptNumber} onClose={onClose}>
       <div className="sales-page__detail">
@@ -173,7 +178,9 @@ function SaleReceiptModal({ sale, business, onClose }: SaleReceiptModalProps) {
                 <small>{item.size}</small>
               </span>
 
-              <strong>{money(item.unitPrice * item.quantity)}</strong>
+              <strong>
+                {money(item.unitPrice * item.quantity)}
+              </strong>
             </div>
           ))}
         </div>

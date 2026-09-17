@@ -7,18 +7,12 @@ import { Settings } from "lucide-react";
 import { Field } from "@/components/Field";
 import { PageTitle } from "@/components/PageTitle";
 
-import type { AppState, Business } from "@/types/types";
-import { updateBusiness } from "@/lib/business";
-
 import "./_page.scss";
+import { useApp } from "@/providers/AppProvider";
 
-export function SettingsPage({
-  business,
-  mutate,
-}: {
-  business: Business;
-  mutate: (fn: (current: AppState) => AppState) => void;
-}) {
+export default function SettingsPage() {
+  const { business, updateBusiness } = useApp();
+
   const [name, setName] = useState(business.name);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -30,18 +24,9 @@ export function SettingsPage({
     setError("");
 
     try {
-      const updatedBusiness = updateBusiness(business, {
-        name,
-      });
+      updateBusiness({ name });
 
-      mutate((current) => ({
-        ...current,
-        business: updatedBusiness,
-      }));
-
-      setName(updatedBusiness.name);
       setSaved(true);
-
       window.setTimeout(() => setSaved(false), 1800);
     } catch (err) {
       setError(
@@ -69,7 +54,9 @@ export function SettingsPage({
 
             <section>
               <h2>Business identity</h2>
-              <p>Keep your shop name recognizable on every receipt.</p>
+              <p>
+                Keep your shop name recognizable on every receipt.
+              </p>
             </section>
           </div>
 
@@ -77,14 +64,19 @@ export function SettingsPage({
             <Field
               label="Business name"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) =>
+                setName(event.target.value)
+              }
               testId="input-business-name"
             />
 
             <p>This is stored only on this device.</p>
 
             {error && (
-              <p role="alert" data-testid="status-settings-error">
+              <p
+                role="alert"
+                data-testid="status-settings-error"
+              >
                 {error}
               </p>
             )}
@@ -100,7 +92,9 @@ export function SettingsPage({
             </button>
 
             {saved && (
-              <span data-testid="status-settings-saved">Saved locally.</span>
+              <span data-testid="status-settings-saved">
+                Saved locally.
+              </span>
             )}
           </div>
         </form>
@@ -108,3 +102,4 @@ export function SettingsPage({
     </div>
   );
 }
+

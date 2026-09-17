@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Electron build output — not source, shouldn't be linted:
+    "dist-electron/**",
+    "release/**",
+    // CommonJS build hook, loaded via require() by electron-builder:
+    "afterPack.js",
   ]),
 ]);
 

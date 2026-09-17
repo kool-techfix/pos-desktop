@@ -5,6 +5,7 @@ import {
   setSessionId,
 } from "./storage";
 import { getSalesPersonByCode } from "./salesPerson";
+import { hashPassword, verifyPassword } from "./password";
 
 export type AdminLoginInput = {
   username: string;
@@ -25,10 +26,10 @@ export type LoginResult = {
   user: User;
 };
 
-export function loginAsAdmin(
+export async function loginAsAdmin(
   users: User[],
   input: AdminLoginInput,
-): LoginResult {
+): Promise<LoginResult> {
   const username = input.username.trim().toLowerCase();
 
   if (!username || !input.password) {
@@ -41,7 +42,7 @@ export function loginAsAdmin(
       candidate.username?.trim().toLowerCase() === username,
   );
 
-  if (!user || user.password !== input.password) {
+  if (!user || !user.password || !(await verifyPassword(input.password, user.password))) {
     throw new Error("Invalid username or password");
   }
 
@@ -49,17 +50,17 @@ export function loginAsAdmin(
     throw new Error("This account is inactive");
   }
 
-  setSessionId(user.id);
+  await setSessionId(user.id);
 
   return {
     user,
   };
 }
 
-export function loginAsSalesPerson(
+export async function loginAsSalesPerson(
   users: User[],
   input: SalesPersonLoginInput,
-): LoginResult {
+): Promise<LoginResult> {
   const signInCode = input.signInCode.trim();
 
   if (!signInCode) {
@@ -76,17 +77,17 @@ export function loginAsSalesPerson(
     throw new Error("This account is inactive");
   }
 
-  setSessionId(user.id);
+  await setSessionId(user.id);
 
   return {
     user,
   };
 }
 
-export function registerAdmin(
+export async function registerAdmin(
   users: User[],
   input: AdminRegistrationInput,
-): User[] {
+): Promise<User[]> {
   const name = input.name.trim();
   const username = input.username.trim();
   const password = input.password;
@@ -119,7 +120,7 @@ export function registerAdmin(
     id: crypto.randomUUID(),
     name,
     username,
-    password,
+    password: await hashPassword(password),
     role: "ADMIN",
     active: true,
   };
@@ -130,10 +131,10 @@ export function registerAdmin(
   ];
 }
 
-export function getCurrentUser(
+export async function getCurrentUser(
   users: User[],
-): User | undefined {
-  const sessionId = getSessionId();
+): Promise<User | undefined> {
+  const sessionId = await getSessionId();
 
   if (!sessionId) {
     return undefined;
@@ -144,17 +145,17 @@ export function getCurrentUser(
   );
 
   if (!user || !user.active) {
-    clearSession();
+    await clearSession();
     return undefined;
   }
 
   return user;
 }
 
-export function isAuthenticated(users: User[]): boolean {
-  return getCurrentUser(users) !== undefined;
+export async function isAuthenticated(users: User[]): Promise<boolean> {
+  return (await getCurrentUser(users)) !== undefined;
 }
 
-export function logout(): void {
-  clearSession();
+export async function logout(): Promise<void> {
+  await clearSession();
 }

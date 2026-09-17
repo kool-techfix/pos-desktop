@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bluebird POS
 
-## Getting Started
+A local-first point-of-sale desktop app for small drink shops, built with
+Next.js and packaged as an Electron app. Data (products, sales, users) is
+stored on-device — in SQLite when running as a packaged desktop app, or in
+`localStorage` when running as a plain web app.
 
-First, run the development server:
+## Stack
+
+- **Next.js** (App Router, Turbopack) for the UI, running in `output: "standalone"` mode.
+- **Electron** hosts the packaged desktop app: it boots the Next.js standalone
+  server internally and loads it in a `BrowserWindow`.
+- **better-sqlite3** persists application state and the current session,
+  accessed from the renderer only through `contextBridge`/IPC
+  (`electron/preload.ts` → `electron/database.ts`).
+- **Vitest** for unit tests of the domain logic in `src/lib/`.
+
+## Getting started (web, no Electron)
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Data persists to your
+browser's `localStorage`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The default seeded admin login is `owner@bluebird.test` / `bluebird`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Running as a desktop app
 
-## Learn More
+```bash
+# Dev: runs `next dev` + the Electron shell against it, with hot reload
+npm run electron:dev
 
-To learn more about Next.js, take a look at the following resources:
+# Production-style local run: builds the Next standalone server + Electron
+# main/preload bundle, then launches Electron against the built output
+npm run electron:prod:build
+npm run electron:prod:start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Packaging a distributable
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run electron:package       # macOS (.dmg)
+npm run electron:package:win   # Windows (nsis)
+```
 
-## Deploy on Vercel
+This builds the Next.js standalone server, bundles the Electron main/preload
+scripts with esbuild, and packages everything with `electron-builder`
+(output in `release/`). `better-sqlite3`'s native binding is unpacked from
+the `asar` archive (`asarUnpack` in `package.json`) so it can still be
+`dlopen`'d at runtime.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tests & linting
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm test    # vitest
+npm run lint
+```

@@ -1,4 +1,7 @@
+"use client";
+
 import { useState } from "react";
+
 import { Plus, Trash2, UsersRound } from "lucide-react";
 
 import { EmptyState } from "@/components/EmptyState";
@@ -6,26 +9,21 @@ import { Field } from "@/components/Field";
 import { Modal } from "@/components/Modal";
 import { PageTitle } from "@/components/PageTitle";
 
-import {
-  addSalesPerson,
-  deleteSalesPerson,
-  getSalesPersons,
-  setSalesPersonActive,
-} from "@/lib/salesPerson";
+import { getSalesPersons } from "@/lib/salesPerson";
 
-import type { AppState, User } from "@/types/types";
+import type { User } from "@/types/types";
 
 import "./_page.scss";
+import { useApp } from "@/providers/AppProvider";
 
-type SalesPeoplePageProps = {
-  state: AppState;
-  mutate: (fn: (current: AppState) => AppState) => void;
-};
+export default function SalesPeoplePage() {
+  const {
+    state,
+    addSalesPerson,
+    setSalesPersonActive,
+    deleteSalesPerson,
+  } = useApp();
 
-export function SalesPeoplePage({
-  state,
-  mutate,
-}: SalesPeoplePageProps) {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
 
@@ -40,13 +38,7 @@ export function SalesPeoplePage({
     event.preventDefault();
 
     try {
-      mutate((current) => ({
-        ...current,
-        users: addSalesPerson(current.users, {
-          name,
-        }),
-      }));
-
+      addSalesPerson({ name });
       closeForm();
     } catch (error) {
       window.alert(
@@ -59,14 +51,7 @@ export function SalesPeoplePage({
 
   const handleToggle = (person: User) => {
     try {
-      mutate((current) => ({
-        ...current,
-        users: setSalesPersonActive(
-          current.users,
-          person.id,
-          !person.active,
-        ),
-      }));
+      setSalesPersonActive(person.id, !person.active);
     } catch (error) {
       window.alert(
         error instanceof Error
@@ -86,13 +71,7 @@ export function SalesPeoplePage({
     }
 
     try {
-      mutate((current) => ({
-        ...current,
-        users: deleteSalesPerson(
-          current.users,
-          person.id,
-        ),
-      }));
+      deleteSalesPerson(person.id);
     } catch (error) {
       window.alert(
         error instanceof Error
@@ -222,7 +201,6 @@ function SalesPersonRow({
 
   return (
     <div
-      key={person.id}
       data-testid={`row-sales-person-${person.id}`}
       className="sales-people-page__row"
     >

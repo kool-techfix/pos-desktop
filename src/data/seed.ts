@@ -9,12 +9,17 @@ export const seedBusiness: Business = {
   name: "Bluebird Drinks",
 };
 
+// Seed admin password is "bluebird", hashed with the same
+// PBKDF2 scheme as src/lib/password.ts (salt-hex:hash-hex).
+const SEED_ADMIN_PASSWORD_HASH =
+  "3e997da3764980ae7d5c3f15e6718f9c:61f2bccdc0de37ee4fade523da4f65914018128a24e149d5514309c3544240fe";
+
 export const seedUsers: User[] = [
   {
     id: "admin-1",
     name: "Mara Ellis",
     username: "owner@bluebird.test",
-    password: "bluebird",
+    password: SEED_ADMIN_PASSWORD_HASH,
     role: "ADMIN",
     active: true,
   },

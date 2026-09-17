@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -19,27 +18,27 @@ import { Metric } from "@/components/Metric";
 import { PageTitle } from "@/components/PageTitle";
 
 import { getTodaySales } from "@/lib/sales";
-import { getLowStockProducts, getProducts } from "@/lib/products";
+import { getLowStockProducts } from "@/lib/products";
 import { money, dateTime } from "@/lib/helpers";
 
-import type { AppState } from "@/types/types";
-
 import "./_page.scss";
+import { useApp } from "@/providers/AppProvider";
 
-export default function Page({ state }: { state: AppState }) {
-  const sales = state?.sales ?? [];
-  const products = state?.products ?? [];
+export default function Page() {
+  const { state } = useApp();
+
+  const sales = state.sales;
+  const products = state.products;
 
   const todaySales = getTodaySales(sales);
-  const allProducts = getProducts(products);
-  const low = getLowStockProducts(allProducts);
+  const low = getLowStockProducts(products);
 
   const revenue = todaySales.reduce(
     (sum, sale) => sum + sale.total,
     0,
   );
 
-  const itemsInStock = allProducts.reduce(
+  const itemsInStock = products.reduce(
     (sum, product) => sum + product.stock,
     0,
   );
@@ -82,14 +81,18 @@ export default function Page({ state }: { state: AppState }) {
           icon={Package}
           label="Items in stock"
           value={String(itemsInStock)}
-          note={`${allProducts.length} products`}
+          note={`${products.length} products`}
         />
 
         <Metric
           icon={SlidersHorizontal}
           label="Needs attention"
           value={String(low.length).padStart(2, "0")}
-          note={low.length ? "Below threshold" : "Stock is healthy"}
+          note={
+            low.length
+              ? "Below threshold"
+              : "Stock is healthy"
+          }
           tone={low.length ? "red" : "green"}
         />
       </div>
@@ -124,11 +127,16 @@ export default function Page({ state }: { state: AppState }) {
               <tbody>
                 {sales.slice(0, 5).map((sale) => (
                   <tr key={sale.id}>
-                    <td className="mono">{sale.receiptNumber}</td>
+                    <td className="mono">
+                      {sale.receiptNumber}
+                    </td>
+
                     <td>{sale.cashierName}</td>
+
                     <td className="muted">
                       {dateTime(sale.createdAt)}
                     </td>
+
                     <td className="total">
                       {money(sale.total)}
                     </td>
@@ -143,7 +151,9 @@ export default function Page({ state }: { state: AppState }) {
           <div className="dashboard-page__section-header dashboard-page__section-header--stacked">
             <div>
               <p>Stock watch</p>
-              <span>Restock before the shelf goes quiet</span>
+              <span>
+                Restock before the shelf goes quiet
+              </span>
             </div>
           </div>
 
@@ -160,7 +170,10 @@ export default function Page({ state }: { state: AppState }) {
                   </div>
 
                   <div>
-                    <strong>{product.stock} left</strong>
+                    <strong>
+                      {product.stock} left
+                    </strong>
+
                     <span>
                       threshold {product.lowStockThreshold}
                     </span>
@@ -194,9 +207,10 @@ export default function Page({ state }: { state: AppState }) {
 
         <div>
           <p>Your data stays with you</p>
+
           <span>
-            Bluebird POS saves changes on this device, ready for the next
-            shift.
+            Bluebird POS saves changes on this device, ready
+            for the next shift.
           </span>
         </div>
 

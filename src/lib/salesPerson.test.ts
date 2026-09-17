@@ -148,7 +148,7 @@ describe("salesPersons", () => {
     );
 
     expect(salesPerson?.name).toBe("Jonathan Bell");
-    expect(salesPerson?.signInCode).toBe("JB9999");
+    expect(salesPerson?.signInCode).toBe("JB4826");
   });
 
   it("does not mutate the original users array", () => {

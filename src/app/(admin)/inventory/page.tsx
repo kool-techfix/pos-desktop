@@ -24,7 +24,7 @@ type ProductForm = {
   lowStockThreshold: string;
 };
 
-export function InventoryPage() {
+export default function InventoryPage() {
   const {
     state,
     addProduct,

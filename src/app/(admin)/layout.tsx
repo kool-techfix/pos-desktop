@@ -1,17 +1,13 @@
+
 // src/app/(admin)/layout.tsx
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { AdminShell } from "@/components/AdminShell";
-import {
-  clearSession,
-  getSessionId,
-  loadState,
-} from "@/lib/storage";
-import type { AppState, User } from "@/types/types";
+import { useApp } from "@/providers/AppProvider";
 
 export default function AdminLayout({
   children,
@@ -21,57 +17,42 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
 
-  const [state, setState] = useState<AppState | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, business, signOut, isInitialized } = useApp();
 
-  useEffect(() => {
-    const appState = loadState();
-    const sessionId = getSessionId();
+ useEffect(() => {
+  if (!isInitialized) {
+    return;
+  }
 
-    const currentUser = appState.users.find(
-      (entry) => entry.id === sessionId && entry.active,
+  if (!user) {
+    router.replace(
+      `/auth?redirect=${encodeURIComponent(pathname)}`,
     );
-
-    setState(appState);
-    setUser(currentUser ?? null);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (isLoading) return;
-
-    // No authenticated user
-    if (!user) {
-      router.replace(`/auth?redirect=${encodeURIComponent(pathname)}`);
-      return;
-    }
-
-    // Sales persons are not allowed inside admin routes
-    if (user.role !== "ADMIN") {
-      router.replace("/sales-pos");
-    }
-  }, [user, isLoading, pathname, router]);
-
-  const signOut = () => {
-    clearSession();
-    setUser(null);
-    router.replace("/auth");
-  };
-
-  // Prevent rendering protected content while authentication is being checked
-  if (isLoading || !state || !user) {
-    return null;
+    return;
   }
 
-  // Extra protection against rendering the admin shell for non-admin users
   if (user.role !== "ADMIN") {
-    return null;
+    router.replace("/sales-pos");
   }
+}, [isInitialized, user, pathname, router]);
+
+  // Prevent protected content from rendering
+  // when there is no authenticated user.
+  if (!isInitialized) {
+  return null;
+}
+
+if (!user) {
+  return null;
+}
+
+if (user.role !== "ADMIN") {
+  return null;
+}
 
   return (
     <AdminShell
-      business={state.business}
+      business={business}
       user={user}
       onSignOut={signOut}
     >

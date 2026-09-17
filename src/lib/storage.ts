@@ -18,11 +18,119 @@ export function createInitialState(): AppState {
   };
 }
 
-export function loadState(): AppState {
-  if (typeof window === "undefined") {
-    return createInitialState();
+function isElectron(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.electronAPI !== "undefined"
+  );
+}
+
+/**
+ * Load application state.
+ *
+ * Electron → SQLite
+ * Browser  → localStorage
+ */
+export async function loadState(): Promise<AppState> {
+  if (isElectron()) {
+    try {
+      const stored = await window.electronAPI!.database.loadState();
+
+      if (stored && isValidAppState(stored)) {
+        return stored;
+      }
+
+      return createInitialState();
+    } catch (error) {
+      console.error("Failed to load state from SQLite, falling back to localStorage:", error);
+      return loadStateFromLocalStorage();
+    }
   }
 
+  return loadStateFromLocalStorage();
+}
+
+/**
+ * Save application state.
+ *
+ * Electron → SQLite
+ * Browser  → localStorage
+ */
+export async function saveState(state: AppState): Promise<void> {
+  if (isElectron()) {
+    try {
+      await window.electronAPI!.database.saveState(state);
+      return;
+    } catch (error) {
+      console.error("Failed to save state to SQLite, falling back to localStorage:", error);
+    }
+  }
+
+  saveStateToLocalStorage(state);
+}
+
+/**
+ * Get the current session.
+ *
+ * Electron → SQLite
+ * Browser  → localStorage
+ */
+export async function getSessionId(): Promise<string | null> {
+  if (isElectron()) {
+    try {
+      return await window.electronAPI!.database.getSession();
+    } catch (error) {
+      console.error("Failed to read session from SQLite, falling back to localStorage:", error);
+      return getSessionIdFromLocalStorage();
+    }
+  }
+
+  return getSessionIdFromLocalStorage();
+}
+
+/**
+ * Set the current session.
+ *
+ * Electron → SQLite
+ * Browser  → localStorage
+ */
+export async function setSessionId(id: string): Promise<void> {
+  if (isElectron()) {
+    try {
+      await window.electronAPI!.database.setSession(id);
+      return;
+    } catch (error) {
+      console.error("Failed to persist session to SQLite, falling back to localStorage:", error);
+    }
+  }
+
+  setSessionIdInLocalStorage(id);
+}
+
+/**
+ * Clear the current session.
+ *
+ * Electron → SQLite
+ * Browser  → localStorage
+ */
+export async function clearSession(): Promise<void> {
+  if (isElectron()) {
+    try {
+      await window.electronAPI!.database.clearSession();
+      return;
+    } catch (error) {
+      console.error("Failed to clear session in SQLite, falling back to localStorage:", error);
+    }
+  }
+
+  clearSessionFromLocalStorage();
+}
+
+/* -------------------------------------------------------------------------- */
+/* LocalStorage fallback                                                      */
+/* -------------------------------------------------------------------------- */
+
+function loadStateFromLocalStorage(): AppState {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
 
@@ -37,59 +145,45 @@ export function loadState(): AppState {
     }
 
     return parsed;
-  } catch {
+  } catch (error) {
+    console.error("Failed to load state from localStorage:", error);
     return createInitialState();
   }
 }
 
-export function saveState(state: AppState): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
+function saveStateToLocalStorage(state: AppState): void {
   try {
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify(state),
     );
-  } catch {
-    // Ignore storage failures.
+  } catch (error) {
+    console.error("Failed to save state to localStorage:", error);
   }
 }
 
-export function getSessionId(): string | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
+function getSessionIdFromLocalStorage(): string | null {
   try {
     return window.localStorage.getItem(SESSION_KEY);
-  } catch {
+  } catch (error) {
+    console.error("Failed to read session from localStorage:", error);
     return null;
   }
 }
 
-export function setSessionId(id: string): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
+function setSessionIdInLocalStorage(id: string): void {
   try {
     window.localStorage.setItem(SESSION_KEY, id);
-  } catch {
-    // Ignore storage failures.
+  } catch (error) {
+    console.error("Failed to persist session to localStorage:", error);
   }
 }
 
-export function clearSession(): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
+function clearSessionFromLocalStorage(): void {
   try {
     window.localStorage.removeItem(SESSION_KEY);
-  } catch {
-    // Ignore storage failures.
+  } catch (error) {
+    console.error("Failed to clear session in localStorage:", error);
   }
 }
 

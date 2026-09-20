@@ -10,6 +10,7 @@ import { PageTitle } from "@/components/PageTitle";
 import { ReceiptPrint } from "@/components/ReceiptPrint";
 
 import { dateOnly, dateTime, money } from "@/lib/helpers";
+import { printReceipt } from "@/lib/printer";
 import type { Business, Sale } from "@/types/types";
 
 import "./_page.scss";
@@ -205,7 +206,7 @@ function SaleReceiptModal({
         <button
           type="button"
           data-testid="button-reprint-receipt"
-          onClick={() => window.print()}
+          onClick={() => { void printReceipt(sale, business); }}
           className="app-button app-button--primary sales-page__print"
         >
           <Printer size={15} aria-hidden="true" />

@@ -1,4 +1,4 @@
-import type { AppState } from "./types";
+import type { AppState, Business, Sale } from "./types";
 
 declare global {
   interface Window {
@@ -9,6 +9,9 @@ declare global {
         getSession: () => Promise<string | null>;
         setSession: (userId: string) => Promise<void>;
         clearSession: () => Promise<void>;
+      };
+      printer: {
+        print: (payload: { sale: Sale; business: Business }) => Promise<void>;
       };
     };
   }

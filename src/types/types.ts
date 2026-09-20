@@ -10,7 +10,11 @@ export type User = {
   active: boolean;
 };
 
-export type Business = { name: string };
+export type Business = {
+  name: string;
+  printerInterface?: string;
+  printerCharsPerLine?: number;
+};
 
 export type Product = {
   id: string;

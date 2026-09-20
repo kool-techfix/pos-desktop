@@ -3,7 +3,9 @@ import {
   closeDatabase,
   getDatabase,
 } from "./database";
+import { printReceipt } from "./printer";
 import path from "path";
+import type { Business, Sale } from "../src/types/types";
 
 const isProduction = app.isPackaged || process.env.ELECTRON_PROD === "true";
 
@@ -214,8 +216,18 @@ function registerDatabaseHandlers(): void {
   });
 }
 
+function registerPrinterHandlers(): void {
+  ipcMain.handle(
+    "printer:print",
+    async (_event, payload: { sale: Sale; business: Business }) => {
+      await printReceipt(payload.sale, payload.business);
+    },
+  );
+}
+
 app.whenReady().then(async () => {
   registerDatabaseHandlers();
+  registerPrinterHandlers();
   try {
     await createWindow();
   } catch (error) {

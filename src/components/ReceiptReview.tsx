@@ -1,6 +1,7 @@
 import { Printer } from 'lucide-react';
 
 import { Modal } from '@/components/Modal';
+import { printReceipt } from '@/lib/printer';
 import type { Business, Sale } from '@/types/types';
 
 import { ReceiptPrint } from './ReceiptPrint';
@@ -31,7 +32,7 @@ export function ReceiptReview({ sale, business, onClose }: ReceiptReviewProps) {
 
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => { void printReceipt(sale, business); }}
             className="app-button app-button--primary"
           >
             <Printer size={15} aria-hidden="true" />

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Settings } from "lucide-react";
+import { Printer, Settings } from "lucide-react";
 
 import { Field } from "@/components/Field";
 import { PageTitle } from "@/components/PageTitle";
@@ -14,6 +14,12 @@ export default function SettingsPage() {
   const { business, updateBusiness } = useApp();
 
   const [name, setName] = useState(business.name);
+  const [printerInterface, setPrinterInterface] = useState(
+    business.printerInterface ?? "",
+  );
+  const [printerCharsPerLine, setPrinterCharsPerLine] = useState(
+    String(business.printerCharsPerLine ?? 32),
+  );
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,7 +30,15 @@ export default function SettingsPage() {
     setError("");
 
     try {
-      updateBusiness({ name });
+      const parsedWidth = Number.parseInt(printerCharsPerLine, 10);
+
+      updateBusiness({
+        name,
+        printerInterface: printerInterface.trim() || undefined,
+        printerCharsPerLine: Number.isFinite(parsedWidth) && parsedWidth > 0
+          ? parsedWidth
+          : undefined,
+      });
 
       setSaved(true);
       window.setTimeout(() => setSaved(false), 1800);
@@ -80,6 +94,50 @@ export default function SettingsPage() {
                 {error}
               </p>
             )}
+          </div>
+
+          <div className="settings-page__intro">
+            <div>
+              <Printer size={20} />
+            </div>
+
+            <section>
+              <h2>Receipt printer</h2>
+              <p>
+                Connect a 58mm thermal printer to print receipts directly,
+                without the system print dialog.
+              </p>
+            </section>
+          </div>
+
+          <div className="settings-page__field">
+            <Field
+              label="Printer connection"
+              value={printerInterface}
+              onChange={(event) => setPrinterInterface(event.target.value)}
+              placeholder="tcp://192.168.1.87:9100"
+              testId="input-printer-interface"
+            />
+
+            <p>
+              A network printer address (e.g. tcp://192.168.1.87:9100) or a
+              local port (e.g. /dev/usb/lp0, \\.\COM1). Leave blank to use the
+              system print dialog instead.
+            </p>
+          </div>
+
+          <div className="settings-page__field">
+            <Field
+              label="Characters per line"
+              value={printerCharsPerLine}
+              onChange={(event) => setPrinterCharsPerLine(event.target.value)}
+              type="number"
+              inputMode="numeric"
+              placeholder="32"
+              testId="input-printer-width"
+            />
+
+            <p>Most 58mm printers fit 32 characters per line.</p>
           </div>
 
           <div className="settings-page__actions">

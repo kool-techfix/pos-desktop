@@ -16,4 +16,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     clearSession: () =>
       ipcRenderer.invoke("db:clear-session"),
   },
+
+  printer: {
+    print: (payload: { sale: unknown; business: unknown }) =>
+      ipcRenderer.invoke("printer:print", payload),
+  },
 });

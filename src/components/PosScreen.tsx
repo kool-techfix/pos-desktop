@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Box,
@@ -16,6 +16,7 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import { ReceiptPrint } from "@/components/ReceiptPrint";
 import { money } from "@/lib/helpers";
+import { printReceipt } from "@/lib/printer";
 import { searchProducts } from "@/lib/products";
 import { calculateSaleTotal } from "@/lib/sales";
 
@@ -47,6 +48,10 @@ export function PosScreen() {
   const total = calculateSaleTotal(cart);
   const paid = Number(amountPaid) || 0;
   const change = paid - total;
+
+  useEffect(() => {
+    setAmountPaid(total > 0 ? total.toFixed(2) : "");
+  }, [total]);
 
   const addToCart = (product: Product) => {
     setCart((current) => {
@@ -358,7 +363,7 @@ export function PosScreen() {
 
             <button
               data-testid="button-print-last-receipt"
-              onClick={() => window.print()}
+              onClick={() => { void printReceipt(lastSale, state.business); }}
             >
               <Printer size={15} />
               Print receipt

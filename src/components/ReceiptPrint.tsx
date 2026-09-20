@@ -6,16 +6,18 @@ import './ReceiptPrint.scss';
 type ReceiptPrintProps = {
   sale: Sale;
   business: Business;
+  preview?: boolean;
 };
 
 export function ReceiptPrint({
   sale,
   business,
+  preview = false,
 }: ReceiptPrintProps) {
   return (
-    <div className="print-receipt">
+    <div className={preview ? "receipt-preview" : "print-receipt"}>
       <div className="receipt-paper">
-        <strong>{business.name}</strong>
+        <strong className="receipt-business-name">{business.name}</strong>
 
         <br />
 
@@ -28,16 +30,15 @@ export function ReceiptPrint({
         <hr />
 
         {sale.items.map((item) => (
-          <div key={item.productId}>
-            <div>
-              {item.quantity} × {item.name}
+          <div className="receipt-item" key={item.productId}>
+            <div className="receipt-item-name">
+              {item.quantity} x {item.name}
+              {item.size && <span className="receipt-item-size"> ({item.size})</span>}
             </div>
 
-            <div>
+            <div className="receipt-item-price">
               {money(item.unitPrice * item.quantity)}
             </div>
-
-            {item.size && <span>{item.size}</span>}
           </div>
         ))}
 

@@ -1,0 +1,35 @@
+.receipt-review {
+  &__hint {
+    color: #5c6872;
+    margin: 0 0 1rem;
+  }
+
+  &__paper {
+    background: #f6f3ed;
+    border: 1px solid #d8d1c5;
+    max-height: 55vh;
+    overflow: auto;
+    padding: 1rem;
+  }
+
+  &__paper .receipt-preview {
+    background: white;
+    box-shadow: 0 2px 8px rgba(20, 37, 54, 0.12);
+    margin: 0 auto;
+    max-width: 58mm;
+    width: 100%;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+}
+
+@media print {
+  .receipt-preview {
+    display: none !important;
+  }
+}

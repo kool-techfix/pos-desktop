@@ -1,9 +1,51 @@
 .print-receipt {
   display: none;
+  width: 100%;
 }
 
 .receipt-paper {
+  box-sizing: border-box;
+  width: 100%;
   font-family: monospace;
   font-size: 11px;
-  padding: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  padding: 3mm;
+}
+
+.receipt-business-name {
+  display: block;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.receipt-item {
+  margin: 3px 0;
+}
+
+.receipt-item-name {
+  overflow-wrap: anywhere;
+}
+
+.receipt-item-size {
+  color: #555;
+}
+
+.receipt-item-price {
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 0;
+  }
+
+  .print-receipt {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
 }

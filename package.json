@@ -15,10 +15,10 @@
     "electron:rebuild": "electron-rebuild -f -w better-sqlite3",
     "electron:start": "electron dist-electron/main.js",
     "electron:dev": "concurrently -k \"next dev\" \"wait-on http://localhost:3000 && npm run electron:build && npm run electron:start\"",
-    "electron:prod:build": "next build && rm -rf .next/standalone/.next/static .next/standalone/public && cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public && npm run electron:build",
+    "electron:prod:build": "next build && node -e \"const fs=require('fs'); fs.rmSync('.next/standalone/.next/static',{recursive:true,force:true}); fs.rmSync('.next/standalone/public',{recursive:true,force:true}); fs.cpSync('.next/static','.next/standalone/.next/static',{recursive:true}); fs.cpSync('public','.next/standalone/public',{recursive:true})\" && npm run electron:build",
     "electron:prod:start": "ELECTRON_PROD=true electron dist-electron/main.js",
-    "electron:package": "rm -rf release && npm run electron:prod:build && electron-builder",
-    "electron:package:win": "rm -rf release && npm run electron:prod:build && electron-builder --win"
+    "electron:package": "node -e \"require('fs').rmSync('release',{recursive:true,force:true})\" && npm run electron:prod:build && electron-builder",
+    "electron:package:win": "node -e \"require('fs').rmSync('release',{recursive:true,force:true})\" && npm run electron:prod:build && electron-builder --win"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
